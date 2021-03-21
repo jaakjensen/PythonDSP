@@ -10,9 +10,9 @@ def apf(inputsignal, audioBuffer, fs, n, delay, gain, amp, rate):
     
     #Calculate current time in seconds for the current sample
     t = n/fs
-    fracDelay = amp * np.sin(2*np.pi*rate*t);
-    intDelay = np.floor(fracDelay);
-    frac = fracDelay - intDelay
+    frac = 0
+    intDelay = 0
+    fracDelay = 0
 
     #Determine indexes for circular buffer
     bufferLength = len(audioBuffer)
@@ -39,9 +39,9 @@ def fbcf(inputsignal, audioBuffer, fs, n, delay, fbGain, amp, rate):
     
     #Calculate current time in seconds for the current sample
     t = n/fs
-    fracDelay = amp * np.sin(2*np.pi*rate*t);
-    intDelay = np.floor(fracDelay);
-    frac = fracDelay - intDelay
+    frac = 0
+    intDelay = 0
+    fracDelay = 0
 
     #Determine indexes for circular buffer
     bufferLength = len(audioBuffer)
@@ -172,7 +172,7 @@ out = out*amplitude
 out = np.asarray(out, dtype = np.int16)
 
 #Write the data to an output file
-wav.write("dspfiles/outputfiles/schroederReverb.wav", 48000, out)
+wav.write("dspfiles/outputfiles/schroederReverbNoMod.wav", 48000, out)
 
 print("Wav file written")
 

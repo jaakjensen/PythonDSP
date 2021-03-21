@@ -3,5 +3,6 @@
 
 *.swp
 *.un~
+*~
 
 /matlabcode/*

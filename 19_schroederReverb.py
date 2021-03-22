@@ -10,8 +10,8 @@ def apf(inputsignal, audioBuffer, fs, n, delay, gain, amp, rate):
     
     #Calculate current time in seconds for the current sample
     t = n/fs
-    fracDelay = amp * np.sin(2*np.pi*rate*t);
-    intDelay = np.floor(fracDelay);
+    fracDelay = amp * np.sin(2*np.pi*rate*t)
+    intDelay = np.floor(fracDelay)
     frac = fracDelay - intDelay
 
     #Determine indexes for circular buffer
@@ -39,8 +39,8 @@ def fbcf(inputsignal, audioBuffer, fs, n, delay, fbGain, amp, rate):
     
     #Calculate current time in seconds for the current sample
     t = n/fs
-    fracDelay = amp * np.sin(2*np.pi*rate*t);
-    intDelay = np.floor(fracDelay);
+    fracDelay = amp * np.sin(2*np.pi*rate*t)
+    intDelay = np.floor(fracDelay)
     frac = fracDelay - intDelay
 
     #Determine indexes for circular buffer
@@ -60,10 +60,10 @@ def fbcf(inputsignal, audioBuffer, fs, n, delay, fbGain, amp, rate):
 #########################################################################
 
 #NOTE: MUST BE 16-bit wav file. 48khz is OK.
-#wav_fname = 'dspfiles/AfroCuban.wav'
+wav_fname = 'dspfiles/AfroCuban.wav'
 #wav_fname = 'dspfiles/Harpsichord.wav'
 #wav_fname = 'dspfiles/VitaminC.wav'
-wav_fname = 'dspfiles/Flashy808.wav'
+#wav_fname = 'dspfiles/Flashy808.wav'
 
 
 fs, inputsignal = wav.read(wav_fname)
@@ -140,8 +140,8 @@ for n in range(0,samplelength):
     combPar = 0.25 * (w1 + w2 + w3 + w4)
 
     # Two series all-pass filters
-    w5, audioBuffer5 = apf(combPar, audioBuffer5, fs, n, d1, g5, amp5, rate5)
-    out[n], audioBuffer6 = apf(w5, audioBuffer6, fs, n, d2, g6, amp6, rate6)
+    w5, audioBuffer5 = apf(combPar, audioBuffer5, fs, n, d5, g5, amp5, rate5)
+    out[n], audioBuffer6 = apf(w5, audioBuffer6, fs, n, d6, g6, amp6, rate6)
 
 
 print("DSP complete")

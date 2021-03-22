@@ -10,9 +10,9 @@ def apf(inputsignal, audioBuffer, fs, n, delay, gain, amp, rate):
     
     #Calculate current time in seconds for the current sample
     t = n/fs
-    frac = 0
-    intDelay = 0
-    fracDelay = 0
+    fracDelay = amp * np.sin(2*np.pi*rate*t)
+    intDelay = np.floor(fracDelay)
+    frac = fracDelay - intDelay
 
     #Determine indexes for circular buffer
     bufferLength = len(audioBuffer)
@@ -34,13 +34,14 @@ def apf(inputsignal, audioBuffer, fs, n, delay, gain, amp, rate):
 
     return out, audioBuffer
 
-def fbcf(inputsignal, audioBuffer, fs, n, delay, fbGain, amp, rate):
+
+def fblpcf(inputsignal, audioBuffer, fs, n, delay, fbGain, amp, rate, fbLPF):
     
     #Calculate current time in seconds for the current sample
     t = n/fs
-    frac = 0
-    intDelay = 0
-    fracDelay = 0
+    fracDelay = amp * np.sin(2*np.pi*rate*t)
+    intDelay = np.floor(fracDelay)
+    frac = fracDelay - intDelay
 
     #Determine indexes for circular buffer
     bufferLength = len(audioBuffer)
@@ -50,7 +51,49 @@ def fbcf(inputsignal, audioBuffer, fs, n, delay, fbGain, amp, rate):
 
     out = (1 - frac) * audioBuffer[int(indexD)] + (frac) *  audioBuffer[int(indexF)]
 
-    audioBuffer[int(indexC)] = inputsignal + fbGain*out
+    # store the current output in appropriate index
+    # The LPF is created by adding the current output
+    # with the previous sample, both are weighted 0.5
+    audioBuffer[int(indexC)] = inputsignal + fbGain*( 0.5 * out + 0.5 * fbLPF )
+    
+    # Store the current output for the feedback LPF
+    # to be used with the next sample
+    fbLPF = out
+
+    return out, audioBuffer, fbLPF
+
+
+def earlyReflections(inputsignal, audioBuffer, fs, n):
+
+    # Delay times converted from milliseconds
+    delayTimes = [0, 0.01277, 0.01283, 0.01293, 0.01333,
+                0.01566, 0.02404, 0.02679, 0.02731, 0.02737, 0.02914,
+                0.02920, 0.02981, 0.03389, 0.04518, 0.04522,
+                0.04527, 0.05452, 0.06958]
+
+    delayTimes = np.fix( [element * fs for element in delayTimes] )
+            
+    # There must be a "gain" for each of the "delayTimes"
+    gains = [0.8, 0.1526, -0.4097, 0.2984, 0.1553, 0.1442,
+            -0.3124, -0.4176, -0.9391, 0.6926, -0.5787, 0.5782,
+            0.4206, 0.3958, 0.3450, -0.5361, 0.417, 0.1948, 0.1548]
+
+    #Determine indexes for circular buffer
+    bufferLength = len(audioBuffer)
+    indexC = ( n % bufferLength ) #Current index
+    audioBuffer[int(indexC)] = inputsignal
+
+    #Initialize the output to be used in the loop
+    out = 0
+
+    # Loop through all the taps
+    for tap in range(0,len(delayTimes)):
+
+        # Find the circular buffer index for the current tap
+        indexTDL =  ( ( n - delayTimes[tap] ) % bufferLength )
+
+        # "Tap" the delay line and add current tap with output
+        out = out + ( gains[tap] * audioBuffer[int(indexTDL)] )
 
     return out, audioBuffer
 
@@ -63,6 +106,7 @@ wav_fname = 'dspfiles/AfroCuban.wav'
 #wav_fname = 'dspfiles/VitaminC.wav'
 #wav_fname = 'dspfiles/Flashy808.wav'
 
+
 fs, inputsignal = wav.read(wav_fname)
 
 Ts = 1/fs
@@ -73,7 +117,7 @@ samplelength = inputsignal.shape[0]
 print(f"Sample Length = {timelength}s")
 
 # Divide audio signal by max int value for signed 16 bit number
-inputsignal = inputsignal/np.iinfo(np.int16).max
+inputsignal = inputsignal/(np.iinfo(np.int16).max)
 
 #Set up the time axis for the waveform
 time = np.linspace(0, timelength, inputsignal.shape[0])
@@ -82,12 +126,13 @@ time = np.linspace(0, timelength, inputsignal.shape[0])
 maxDelay = np.ceil(0.07*fs) #maximum delay of 70msecs
 
 #Create a buffer filled with zeros 
-audioBuffer1 = np.zeros(int(maxDelay))
-audioBuffer2 = np.zeros(int(maxDelay))
-audioBuffer3 = np.zeros(int(maxDelay))
-audioBuffer4 = np.zeros(int(maxDelay))
-audioBuffer5 = np.zeros(int(maxDelay))
-audioBuffer6 = np.zeros(int(maxDelay))
+audioBufferER = np.zeros(int(maxDelay)-1)
+audioBuffer1 = np.zeros(int(maxDelay)-1)
+audioBuffer2 = np.zeros(int(maxDelay)-1)
+audioBuffer3 = np.zeros(int(maxDelay)-1)
+audioBuffer4 = np.zeros(int(maxDelay)-1)
+audioBuffer5 = np.zeros(int(maxDelay)-1)
+audioBuffer6 = np.zeros(int(maxDelay)-1)
 
 #msecs of delay
 d1 = np.fix(0.0297*fs)
@@ -102,8 +147,8 @@ g1 = 0.95
 g2 = -0.95
 g3 = 0.95
 g4 = -0.95
-g5 = 0.9
-g6 = 0.9
+g5 = 0.7
+g6 = 0.7
 
 #LFO rate in Hz
 rate1 = 0.6
@@ -114,24 +159,33 @@ rate5 = 1.07
 rate6 = 1.19
 
 #Range of +/- samples for modulation delay
-amp1 = 8
-amp2 = 8
-amp3 = 8
-amp4 = 8
-amp5 = 8
-amp6 = 8
+amp1 = 12
+amp2 = 12
+amp3 = 12
+amp4 = 12
+amp5 = 12
+amp6 = 12
 
 #initialize output signal
 out = np.zeros(samplelength)
 
+#init fbLPF variables
+fbLPF1 = 0
+fbLPF2 = 0
+fbLPF3 = 0
+fbLPF4 = 0
+
 #Run the function through all the samples
 for n in range(0,samplelength):
 
+    # Early reflections TDL
+    w0, audioBufferER = earlyReflections(inputsignal[n,0], audioBufferER, fs, n)
+
     # Four parallel FBCF
-    w1, audioBuffer1 = fbcf(inputsignal[n,0], audioBuffer1, fs, n, d1, g1, amp1, rate1)
-    w2, audioBuffer2 = fbcf(inputsignal[n,0], audioBuffer2, fs, n, d2, g2, amp2, rate2)
-    w3, audioBuffer3 = fbcf(inputsignal[n,0], audioBuffer3, fs, n, d3, g3, amp3, rate3)
-    w4, audioBuffer4 = fbcf(inputsignal[n,0], audioBuffer4, fs, n, d4, g4, amp4, rate4)
+    w1, audioBuffer1, fbLPF1 = fblpcf(w0, audioBuffer1, fs, n, d1, g1, amp1, rate1, fbLPF1)
+    w2, audioBuffer2, fbLPF2 = fblpcf(w0, audioBuffer2, fs, n, d2, g2, amp2, rate2, fbLPF2)
+    w3, audioBuffer3, fbLPF3 = fblpcf(w0, audioBuffer3, fs, n, d3, g3, amp3, rate3, fbLPF3)
+    w4, audioBuffer4, fbLPF4 = fblpcf(w0, audioBuffer4, fs, n, d4, g4, amp4, rate4, fbLPF4)
 
     # Combine parallel paths
     combPar = 0.25 * (w1 + w2 + w3 + w4)
@@ -169,7 +223,7 @@ out = out*amplitude
 out = np.asarray(out, dtype = np.int16)
 
 #Write the data to an output file
-wav.write("dspfiles/outputfiles/schroederReverbNoMod.wav", 48000, out)
+wav.write("dspfiles/outputfiles/moorerReverbMod12.wav", 48000, out)
 
 print("Wav file written")
 

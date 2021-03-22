@@ -10,9 +10,9 @@ def apf(inputsignal, audioBuffer, fs, n, delay, gain, amp, rate):
     
     #Calculate current time in seconds for the current sample
     t = n/fs
-    frac = 0
-    intDelay = 0
-    fracDelay = 0
+    fracDelay = amp * np.sin(2*np.pi*rate*t)
+    intDelay = np.floor(fracDelay)
+    frac = fracDelay - intDelay
 
     #Determine indexes for circular buffer
     bufferLength = len(audioBuffer)
@@ -34,13 +34,14 @@ def apf(inputsignal, audioBuffer, fs, n, delay, gain, amp, rate):
 
     return out, audioBuffer
 
-def fbcf(inputsignal, audioBuffer, fs, n, delay, fbGain, amp, rate):
+
+def fblpcf(inputsignal, audioBuffer, fs, n, delay, fbGain, amp, rate, fbLPF):
     
     #Calculate current time in seconds for the current sample
     t = n/fs
-    frac = 0
-    intDelay = 0
-    fracDelay = 0
+    fracDelay = amp * np.sin(2*np.pi*rate*t)
+    intDelay = np.floor(fracDelay)
+    frac = fracDelay - intDelay
 
     #Determine indexes for circular buffer
     bufferLength = len(audioBuffer)
@@ -50,9 +51,17 @@ def fbcf(inputsignal, audioBuffer, fs, n, delay, fbGain, amp, rate):
 
     out = (1 - frac) * audioBuffer[int(indexD)] + (frac) *  audioBuffer[int(indexF)]
 
-    audioBuffer[int(indexC)] = inputsignal + fbGain*out
+    # store the current output in appropriate index
+    # The LPF is created by adding the current output
+    # with the previous sample, both are weighted 0.5
+    audioBuffer[int(indexC)] = inputsignal + fbGain*( 0.5 * out + 0.5 * fbLPF )
+    
+    # Store the current output for the feedback LPF
+    # to be used with the next sample
+    fbLPF = out
 
-    return out, audioBuffer
+    return out, audioBuffer, fbLPF
+
 
 #########################################################################
 #########################################################################
@@ -62,6 +71,7 @@ wav_fname = 'dspfiles/AfroCuban.wav'
 #wav_fname = 'dspfiles/Harpsichord.wav'
 #wav_fname = 'dspfiles/VitaminC.wav'
 #wav_fname = 'dspfiles/Flashy808.wav'
+
 
 fs, inputsignal = wav.read(wav_fname)
 
@@ -124,14 +134,20 @@ amp6 = 8
 #initialize output signal
 out = np.zeros(samplelength)
 
+#init fbLPF variables
+fbLPF1 = 0
+fbLPF2 = 0
+fbLPF3 = 0
+fbLPF4 = 0
+
 #Run the function through all the samples
 for n in range(0,samplelength):
 
     # Four parallel FBCF
-    w1, audioBuffer1 = fbcf(inputsignal[n,0], audioBuffer1, fs, n, d1, g1, amp1, rate1)
-    w2, audioBuffer2 = fbcf(inputsignal[n,0], audioBuffer2, fs, n, d2, g2, amp2, rate2)
-    w3, audioBuffer3 = fbcf(inputsignal[n,0], audioBuffer3, fs, n, d3, g3, amp3, rate3)
-    w4, audioBuffer4 = fbcf(inputsignal[n,0], audioBuffer4, fs, n, d4, g4, amp4, rate4)
+    w1, audioBuffer1, fbLPF1 = fblpcf(inputsignal[n,0], audioBuffer1, fs, n, d1, g1, amp1, rate1, fbLPF1)
+    w2, audioBuffer2, fbLPF2 = fblpcf(inputsignal[n,0], audioBuffer2, fs, n, d2, g2, amp2, rate2, fbLPF2)
+    w3, audioBuffer3, fbLPF3 = fblpcf(inputsignal[n,0], audioBuffer3, fs, n, d3, g3, amp3, rate3, fbLPF3)
+    w4, audioBuffer4, fbLPF4 = fblpcf(inputsignal[n,0], audioBuffer4, fs, n, d4, g4, amp4, rate4, fbLPF4)
 
     # Combine parallel paths
     combPar = 0.25 * (w1 + w2 + w3 + w4)
@@ -169,7 +185,7 @@ out = out*amplitude
 out = np.asarray(out, dtype = np.int16)
 
 #Write the data to an output file
-wav.write("dspfiles/outputfiles/schroederReverbNoMod.wav", 48000, out)
+wav.write("dspfiles/outputfiles/schroederReverbWithLPCF.wav", 48000, out)
 
 print("Wav file written")
 

@@ -15,8 +15,6 @@ ax1.plot(w, 20 * np.log10(abs(h)), 'b')
 ax1.set_ylabel('Magnitude [dB]', color='b')
 ax1.set_xlabel('Normalized Frequency [$\pi$*rad/sample]')
 
-print(np.angle(h))
-
 ax2 = ax1.twinx()
 angles = np.unwrap(np.angle(h))
 

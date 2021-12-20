@@ -1,9 +1,11 @@
 import numpy as np
 from scipy import signal
 
-# 1 sample delay: y[n] = x[n] + y[n-1]
-b = [1]
-a = [1, -1]
+# 1 sample delay: y[n] = beta * x[n] + alpha * y[n-1]
+beta = 0.5
+alpha = 1-beta
+b = [beta]
+a = [1, -alpha]
 
 # Sampling frequency = 2
 w, h = signal.freqz(b, a, fs=2)
@@ -11,6 +13,7 @@ w, h = signal.freqz(b, a, fs=2)
 import matplotlib.pyplot as plt
 
 fig, ax1 = plt.subplots(2)
+ax1[0].set_xscale('log')
 ax1[0].set_title('Digital filter frequency response')
 ax1[0].plot(w, 20 * np.log10(abs(h)), 'blue')
 ax1[0].set_ylabel('Magnitude [dB]', color='b')

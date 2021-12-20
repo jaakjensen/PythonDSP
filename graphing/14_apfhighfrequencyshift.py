@@ -3,7 +3,7 @@ from scipy import signal
 
 # gain must be less than 1
 # to maintain stability
-g = 0.2
+g = 0.5
 
 # Difference equation: 
 # y[n] = g*x[n] + x[n-1] 

@@ -49,6 +49,12 @@ def modDelay(inputsignal, audioBuffer, fs, n, delay, amp, rate):
     indexD = ( ( n - delay + intDelay) % bufferLength )         #Delay index
     indexF = ( ( n - delay + intDelay + 1 ) % bufferLength )    #Fractional index
 
+    print(f"bufLen = {bufferLength}")
+    print(f"C = {indexC}")
+    print(f"D = {indexD}")
+    print(f"F = {indexF}")
+    
+
     out = (1 - frac) * audioBuffer[int(indexD)] + (frac) *  audioBuffer[int(indexF)]
 
     # store the current output in appropriate index
@@ -111,6 +117,14 @@ d4 = np.fix(0.0437*fs)
 d5 = np.fix(0.005*fs)
 d6 = np.fix(0.0017*fs)
 
+print(d1)
+print(d2)
+print(d3)
+print(d4)
+print(d5)
+print(d6)
+
+
 #Gain value for feedforward and feedback paths
 g11 = 0
 g12 = 1
@@ -167,7 +181,8 @@ fbLPF2 = 0
 fbLPF3 = 0
 fbLPF4 = 0
 
-#global gain to control reverb time
+# global gain to control reverb time
+# must be less than 1/sqrt(2)
 g = 0.69
 
 #Run the function through all the samples
@@ -193,6 +208,7 @@ for n in range(0,samplelength):
 
     # Combine parallel paths
     fdnOutput = 0.25 * (outDL1 + outDL2 + outDL3 + outDL4)
+    #out[n] = 0.25 * (outDL1 + outDL2 + outDL3 + outDL4)
 
     # Calculate feedback (including crossover)
     fb1 = g * (g11 * outDL1 + g21 * outDL2 + g31 * outDL3 + g41 * outDL4)
@@ -203,7 +219,6 @@ for n in range(0,samplelength):
     # Two series all-pass filters
     w1, audioBuffer5 = apf(fdnOutput, audioBuffer5, fs, n, d5, g5, amp5, rate5)
     out[n], audioBuffer6 = apf(w1, audioBuffer6, fs, n, d6, g6, amp6, rate6)
-
 
 print("DSP complete")
 
@@ -233,7 +248,7 @@ out = out*amplitude
 out = np.asarray(out, dtype = np.int16)
 
 #Write the data to an output file
-wav.write("dspfiles/outputfiles/infiniteReverb.wav", 48000, out)
+wav.write("dspfiles/outputfiles/infiniteReverbPuckette.wav", 48000, out)
 
 print("Wav file written")
 

@@ -32,7 +32,39 @@ def biquadLPF(inputsig, Fs, cutoff, Q, dBGain):
     d1 = 0
     d2 = 0
 
-    for n in range(0,N-1)
+    for n in range(0,N-1):
+        out[n] = (b0/a0)*inputsig[n] + d1
+        d1 = (b1/a0)*inputsig[n] - (a1/a0)*out[n] + d2
+        d2 = (b2/a0)*inputsig[n] - (a2/a0)*out[n]
+
+    return out[n]
+
+
+
+def biquadHPF(inputsig, Fs, cutoff, Q, dBGain):
+
+    #Initial parameters
+    N = len(inputsig)
+    out = np.zeros(N)
+
+    #Intermediate variables
+    w0 = 2*np.pi*cutoff/Fs          # Angular freq. (radians/sample)
+    alpha = np.sin(w0)/(2*Q)        #Filter width
+    A = np.sqrt(10^(dBGain/20))     #Amplitude
+    
+    #Filter coefficients
+    b0 = (1- np.cos(w0))/2
+    b1 = 1- np.cos(w0)
+    b2 = (1- np.cos(w0))/2
+    a0 = 1 + alpha
+    a1 = -2*cos(w0)
+    a2 = 1-alpha
+
+    #Transposed direct form II implementation
+    d1 = 0
+    d2 = 0
+
+    for n in range(0,N-1):
         out[n] = (b0/a0)*inputsig[n] + d1
         d1 = (b1/a0)*inputsig[n] - (a1/a0)*out[n] + d2
         d2 = (b2/a0)*inputsig[n] - (a2/a0)*out[n]

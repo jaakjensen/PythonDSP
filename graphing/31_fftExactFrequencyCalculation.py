@@ -1,5 +1,7 @@
 # Use this animation to calculate the exact
-# frequency of a signal in a bin
+# frequency of a signal in a bin.
+# Press 'k' and 'l' keys to raise and lower
+# the frequency of the cosine wave.
 from scipy.fft import fft, fftfreq
 import numpy as np
 from scipy import signal
@@ -50,7 +52,7 @@ def calculateFreqWithFFT():
     #grab X and Y values for first FFT
     x_vals1 = xf1[0:int(N/2)]
     y_vals1 = 2.0/N * np.abs(ywf1[0:int(N/2)])
-    #Grab bin with largest peak:
+    #Grab bin with largest peak (not the greatest approach):
     maxValue = np.max(y_vals1)
     binNum = 0
     for i in y_vals1:
@@ -64,9 +66,9 @@ def calculateFreqWithFFT():
     #grab phase values from both FFTs
     phase1 = np.arctan2(ywf1[0:int(N/2)].imag, ywf1[0:int(N/2)].real)
     phase2 = np.arctan2(ywf2[0:int(N/2)].imag, ywf2[0:int(N/2)].real)
-    # unwrap the phase
-    phase1 = np.unwrap(phase1)
-    phase2 = np.unwrap(phase2)
+    # unwrap the phase -> I don't think you have to do this step
+    #phase1 = np.unwrap(phase1)
+    #phase2 = np.unwrap(phase2)
     #take the difference
     phaseDifference = phase2 - phase1
     #calculate phase remainder

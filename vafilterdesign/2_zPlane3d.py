@@ -44,7 +44,7 @@ Z = f(X, Y)
 
 #Plot X,Y,and Z
 ax = plt.axes(projection='3d')
-#ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
+ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
 ax.set_title('Z-Plane');
 
 # Plot the unit circle

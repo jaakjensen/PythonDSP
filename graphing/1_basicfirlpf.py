@@ -2,7 +2,8 @@ import numpy as np
 from scipy import signal
 
 # Filter function: y[n] = x[n] + x[n-1]
-b = [1,1] 
+coef = 0.5
+b = [coef,1-coef] 
 
 # Sampling frequency = 2
 w, h = signal.freqz(b, fs=2)

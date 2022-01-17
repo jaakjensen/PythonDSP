@@ -6,7 +6,7 @@ from scipy import signal
 
 
 Fs = 48000
-cutoff = 2000
+cutoff = 16000
 Q = 10
 dBGain = 0
 
@@ -43,17 +43,14 @@ ax1[0].set_xscale('log')
 ax1[0].set_title('Digital filter frequency response')
 ax1[0].plot(w, 20 * np.log10(abs(h)), 'blue')
 ax1[0].set_ylabel('Magnitude [dB]', color='b')
-ax1[0].axis('tight')
+ax1[0].set_ylim(-24,24)
 
 
 # calculate the phase
 angles = np.angle(h)
 
-# Convert from radians to degrees:
-angles = ( angles * 180 ) / np.pi
-
 ax1[1].plot(w, angles, 'green')
-
+ax1[1].set_xscale('log')
 ax1[1].set_ylabel('Phase (degrees)', color='g')
 ax1[1].set_xlabel('Normalized Frequency [$\pi$*rad/sample]')
 ax1[1].grid()

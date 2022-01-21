@@ -1,6 +1,17 @@
 import numpy as np
+import matplotlib
 from scipy import signal
 import matplotlib.pyplot as plt
+
+# This bit of code is used to save the
+# output plot for use in LaTex
+#matplotlib.use("pgf")
+#matplotlib.rcParams.update({
+#    "pgf.texsystem": "pdflatex",
+#    'font.family': 'serif',
+#    'text.usetex': True,
+#    'pgf.rcfonts': False,
+#})
 
 #for this particular example, ignore div/0 
 #in the np.log10 expression
@@ -57,4 +68,5 @@ ax1[1].yaxis.set_major_locator(plt.MultipleLocator(np.pi / 2))
 ax1[1].set_xscale('log')
 ax1[1].set_xlim(0.01,np.pi)
 ax1[1].grid()
+#plt.savefig('latex/svf/svflpf.pgf')
 plt.show()
